@@ -4,13 +4,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"log"
 
-	fasthttpprom "github.com/carousell/fiber-prometheus-middleware"
+	prom "github.com/carousell/fiber-prometheus-middleware"
 )
 
 func main() {
 
 	r := fiber.New()
-	p := fasthttpprom.NewPrometheus("")
+	p := prom.NewPrometheus("")
 	p.Use(r)
 
 	r.Get("/health", func(ctx *fiber.Ctx) error {
