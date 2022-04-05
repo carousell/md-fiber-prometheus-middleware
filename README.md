@@ -1,34 +1,36 @@
-# fasthttp prometheus-middleware
-Fasthttp [fasthttp](https://github.com/valyala/fasthttp) middleware for Prometheus
+# fiber prometheus-middleware
+[Fiber](https://gofiber.io/) middleware for Prometheus
 
 Export metrics for request duration ```request_duration``` and request count ```request_count```
 
 ## Example
-using fasthttp/router
+using fiber
 
-    package main
+```go
+package main
 
-    import (
+import (
+	"github.com/gofiber/fiber/v2"
 	"log"
 
-	fasthttpprom "github.com/carousell/fasthttp-prometheus-middleware"
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-	)
+	fasthttpprom "github.com/carousell/fiber-prometheus-middleware"
+)
 
-    func main() {
+func main() {
 
-		r := router.New()
-		p := fasthttpprom.NewPrometheus("")
-		p.Use(r)
+	r := fiber.New()
+	p := fasthttpprom.NewPrometheus("")
+	p.Use(r)
 
-		r.GET("/health", func(ctx *fasthttp.RequestCtx) {
-			ctx.SetStatusCode(200)
-			ctx.SetBody([]byte(`{"status": "pass"}`))
-			log.Println(string(ctx.Request.URI().Path()))
-		})
+	r.Get("/health", func(ctx *fiber.Ctx) error {
+		ctx.Status(200)
+		log.Println(string(ctx.Request().URI().Path()))
+		return ctx.JSON(map[string]string{"status": "pass"})
+	})
 
-		log.Println("main is listening on ", "8080")
-		log.Fatal(fasthttp.ListenAndServe(":"+"8080", p.Handler))
-	
-    }
+	log.Println("main is listening on ", "8081")
+	log.Fatal(r.Listen(":8081"))
+
+}
+
+```
