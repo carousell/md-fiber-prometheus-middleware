@@ -3,7 +3,6 @@ package fiberprom
 import (
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gofiber/adaptor/v2"
@@ -19,8 +18,6 @@ type Prometheus struct {
 	reqDur      *prometheus.HistogramVec
 	router      fiber.Router
 	MetricsPath string
-	// urlMapper is a map of url to be mapped to a different url to avoid too many labels
-	urlMapper map[string]string
 }
 
 // NewPrometheus generates a new set of metrics with a certain subsystem name
@@ -31,10 +28,6 @@ func NewPrometheus(subsystem string) *Prometheus {
 	p.registerMetrics(subsystem)
 
 	return p
-}
-
-func (p *Prometheus) SetURLMapper(mapper map[string]string) {
-	p.urlMapper = mapper
 }
 
 func (p *Prometheus) registerMetrics(subsystem string) {
@@ -69,25 +62,25 @@ func (p *Prometheus) HandlerFunc() fiber.Handler {
 			return ctx.Next()
 		}
 
-		if len(p.urlMapper) > 0 {
-			for prefix, val := range p.urlMapper {
-				if strings.HasPrefix(uri, prefix) {
-					uri = val
-					break
-				}
-			}
-		}
-
 		start := time.Now()
-
-		defer func() {
-			status := strconv.Itoa(ctx.Response().StatusCode())
-			elapsed := float64(time.Since(start)) / float64(time.Second)
-			ep := ctx.Method() + "_" + uri
-			p.reqDur.WithLabelValues(status, ep).Observe(elapsed)
-		}()
 		// next
-		return ctx.Next()
+		err := ctx.Next()
+
+		status := fiber.StatusInternalServerError
+		if err != nil {
+			if e, ok := err.(*fiber.Error); ok {
+				// Get correct error code from fiber.Error type
+				status = e.Code
+			}
+		} else {
+			status = ctx.Response().StatusCode()
+		}
+		uri = ctx.Route().Path
+		elapsed := float64(time.Since(start)) / float64(time.Second)
+		ep := ctx.Method() + "_" + uri
+		p.reqDur.WithLabelValues(strconv.Itoa(status), ep).Observe(elapsed)
+
+		return err
 	}
 }
 
