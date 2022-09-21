@@ -1,13 +1,14 @@
 package fiberprom
 
 import (
+	"log"
+	"strconv"
+	"time"
+
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
-	"strconv"
-	"time"
 )
 
 var defaultMetricPath = "/metrics"
@@ -17,6 +18,8 @@ type Prometheus struct {
 	reqDur      *prometheus.HistogramVec
 	router      fiber.Router
 	MetricsPath string
+	// urlMapper is a map of url to be mapped to a different url to avoid too many labels
+	urlMapper map[string]string
 }
 
 // NewPrometheus generates a new set of metrics with a certain subsystem name
@@ -27,6 +30,10 @@ func NewPrometheus(subsystem string) *Prometheus {
 	p.registerMetrics(subsystem)
 
 	return p
+}
+
+func (p *Prometheus) SetURLMapper(mapper map[string]string) {
+	p.urlMapper = mapper
 }
 
 func (p *Prometheus) registerMetrics(subsystem string) {
@@ -52,13 +59,19 @@ func (p *Prometheus) Use(r fiber.Router) {
 	r.Get(p.MetricsPath, prometheusHandler())
 }
 
-// HandlerFunc is onion or wraper to handler for fasthttp listenandserve
+// HandlerFunc is onion or wrapper to handler for fasthttp listenandserve
 func (p *Prometheus) HandlerFunc() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		uri := string(ctx.Request().URI().Path())
 		if uri == p.MetricsPath {
 			// next
 			return ctx.Next()
+		}
+
+		if len(p.urlMapper) > 0 {
+			if mappedPath, ok := p.urlMapper[uri]; ok {
+				uri = mappedPath
+			}
 		}
 
 		start := time.Now()
