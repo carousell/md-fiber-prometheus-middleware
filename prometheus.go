@@ -69,7 +69,8 @@ func (p *Prometheus) HandlerFunc() fiber.Handler {
 		}
 
 		if len(p.urlMapper) > 0 {
-			if mappedPath, ok := p.urlMapper[uri]; ok {
+			path := ctx.Route().Path
+			if mappedPath, ok := p.urlMapper[path]; ok {
 				uri = mappedPath
 			}
 		}
