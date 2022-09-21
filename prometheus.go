@@ -3,6 +3,7 @@ package fiberprom
 import (
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/adaptor/v2"
@@ -69,9 +70,11 @@ func (p *Prometheus) HandlerFunc() fiber.Handler {
 		}
 
 		if len(p.urlMapper) > 0 {
-			path := ctx.Route().Path
-			if mappedPath, ok := p.urlMapper[path]; ok {
-				uri = mappedPath
+			for prefix, val := range p.urlMapper {
+				if strings.HasPrefix(uri, prefix) {
+					uri = val
+					break
+				}
 			}
 		}
 
