@@ -1,6 +1,6 @@
 module github.com/carousell/fiber-prometheus-middleware
 
-go 1.17
+go 1.22
 
 require (
 	github.com/gofiber/adaptor/v2 v2.2.1
@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
